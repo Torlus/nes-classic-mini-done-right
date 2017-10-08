@@ -1,0 +1,5 @@
+#!/bin/sh
+
+g++ -c cpu6502.cpp
+g++ -c test_cpu6502.cpp
+g++ -o test_cpu6502 cpu6502.o test_cpu6502.o
