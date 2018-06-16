@@ -7,6 +7,11 @@ PPU::PPU(void) {
 }
 
 void PPU::reset(void) {
+
+    ////////////////////////////////////////////////////////////////////////////
+    // CPU INTERFACE
+    ////////////////////////////////////////////////////////////////////////////
+
     // PPUCTRL
     nt_base = 0x2000;
     add32 = false;
@@ -53,12 +58,19 @@ void PPU::reset(void) {
 
     // OAMDMA
     oam_dma_base = 0x0000;
+
+    ////////////////////////////////////////////////////////////////////////////
+    // INTERNAL PROCESSING
+    ////////////////////////////////////////////////////////////////////////////
+
+
+
 }
 
 void PPU::write(uint16_t address, uint8_t data) {
     if (address == 0x4014) {
         oam_dma_base = data;
-        // TODO: Implement DMA transfer  
+        // TODO: Implement DMA transfer
     } else if ((address & 0xE000) == 0x2000) {
         last_write = data;
         switch(address & 7) {
@@ -89,7 +101,7 @@ void PPU::write(uint16_t address, uint8_t data) {
             break;
         case 0x5:
             if (second_write) {
-                scroll_y = data; 
+                scroll_y = data;
             } else {
                 scroll_x = data;
             }
@@ -97,7 +109,7 @@ void PPU::write(uint16_t address, uint8_t data) {
             break;
         case 0x6:
             if (second_write) {
-                ppu_addr = (ppu_addr & 0xFF00) | data; 
+                ppu_addr = (ppu_addr & 0xFF00) | data;
             } else {
                 ppu_addr = (ppu_addr & 0x00FF) | ((uint16_t)data << 8);
             }
@@ -140,7 +152,7 @@ uint8_t PPU::read(uint16_t address) {
             } else {
                 ppu_addr += 1;
             }
-            break;            
+            break;
         default:
             fprintf(stderr, "PPU: read from a WO register @%04X\n", address);
             break;
@@ -149,4 +161,8 @@ uint8_t PPU::read(uint16_t address) {
         fprintf(stderr, "PPU: unmapped read @%04X\n", address);
     }
     return data;
+}
+
+void PPU::step(void) {
+
 }
