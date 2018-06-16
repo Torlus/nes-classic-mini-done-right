@@ -3,4 +3,23 @@
 # g++ -c cpu6502.cpp
 # g++ -c test_cpu6502.cpp
 # g++ -o test_cpu6502 cpu6502.o test_cpu6502.o
-g++ -c ppu.cpp
+
+# g++ -c ppu.cpp
+
+# Options for GCC compiler
+COMPILE_OPT="-cc -O3 -CFLAGS -Wno-attributes"
+
+# Comment this line to disable VCD generation
+TRACE_OPT="-trace"
+
+# Verilog top module
+TOP_FILE=cpu65xx
+
+#C++ support files
+CPP_FILES=\
+"test_cpu6502_hw.cpp"
+
+verilator $TOP_FILE.v $COMPILE_OPT $TRACE_OPT -top-module $TOP_FILE -exe $CPP_FILES
+cd ./obj_dir
+make -j -f V$TOP_FILE.mk V$TOP_FILE
+cd ..

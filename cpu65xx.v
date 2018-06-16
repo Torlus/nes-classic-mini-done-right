@@ -76,7 +76,7 @@ output  [7:0] debugY;
 output  [7:0] debugS;
 
 //  type cpuCycles is
-localparam [5:0]
+localparam [4:0]
   opcodeFetch       = 5'b00000,  // New opcode is read and registers updated
   cycle2            = 5'b00001,
   cycle3            = 5'b00010,
@@ -855,11 +855,7 @@ localparam [3:0]
                         processIrq ? 8'h00 :
                         din;
 
-  always @(posedge clk or din or reset or processIrq)
-  begin
-    // Next opcode is read from input unless a reset or IRQ is pending.
-    nextOpcode <= myNextOpcode;
-  end
+  assign nextOpcode = myNextOpcode;
 
   assign nextOpcInfo = opcodeInfoTable[nextOpcode];
   always @(posedge clk)
@@ -903,14 +899,14 @@ localparam [3:0]
   // process(enable, theCpuCycle, opcInfo)
   always @(enable or theCpuCycle or opcInfo)
   begin
-    updateRegisters <= 1'b0;
+    updateRegisters = 1'b0;
     if (enable) begin
       if (opcInfo[`opcRti]) begin
         if (theCpuCycle == cycleRead) begin
-          updateRegisters <= 1'b1;
+          updateRegisters = 1'b1;
         end
       end else if (theCpuCycle == opcodeFetch) begin
-        updateRegisters <= 1'b1;
+        updateRegisters = 1'b1;
       end
     end
   end
@@ -933,11 +929,11 @@ localparam [3:0]
   // calcNextCpuCycle: process(theCpuCycle, opcInfo, theOpcode, indexOut, T, N, V, C, Z)
   always @(theCpuCycle or opcInfo or theOpcode or indexOut or T or N or V or C or Z)
   begin
-    nextCpuCycle <= opcodeFetch;
+    nextCpuCycle = opcodeFetch;
 
     case (theCpuCycle)
       opcodeFetch : begin
-        nextCpuCycle <= cycle2;
+        nextCpuCycle = cycle2;
       end
       cycle2 : begin
         if (opcInfo[`opcBranch]) begin
@@ -946,132 +942,132 @@ localparam [3:0]
             || ((C == theOpcode[5]) && (theOpcode[7:6] == 2'b10))
             || ((Z == theOpcode[5]) && (theOpcode[7:6] == 2'b11)) ) begin
             // Branch condition is true
-            nextCpuCycle <= cycleBranchTaken;
+            nextCpuCycle = cycleBranchTaken;
           end
         end else if (opcInfo[`opcStackUp]) begin
-          nextCpuCycle <= cycleStack1;
+          nextCpuCycle = cycleStack1;
         end else if (opcInfo[`opcStackAddr] && opcInfo[`opcStackData]) begin
-          nextCpuCycle <= cycleStack2;
+          nextCpuCycle = cycleStack2;
         end else if (opcInfo[`opcStackAddr]) begin
-          nextCpuCycle <= cycleStack1;
+          nextCpuCycle = cycleStack1;
         end else if (opcInfo[`opcStackData]) begin
-          nextCpuCycle <= cycleWrite;
+          nextCpuCycle = cycleWrite;
         end else if (opcInfo[`opcAbsolute]) begin
-          nextCpuCycle <= cycle3;
+          nextCpuCycle = cycle3;
         end else if (opcInfo[`opcIndirect]) begin
           if (opcInfo[`indexX]) begin
-            nextCpuCycle <= cyclePreIndirect;
+            nextCpuCycle = cyclePreIndirect;
           end else begin
-            nextCpuCycle <= cycleIndirect;
+            nextCpuCycle = cycleIndirect;
           end
         end else if (opcInfo[`opcZeroPage]) begin
           if (opcInfo[`opcWrite]) begin
             if (opcInfo[`indexX] || opcInfo[`indexY]) begin
-              nextCpuCycle <= cyclePreWrite;
+              nextCpuCycle = cyclePreWrite;
             end else begin
-              nextCpuCycle <= cycleWrite;
+              nextCpuCycle = cycleWrite;
             end
           end else begin
             if (opcInfo[`indexX] || opcInfo[`indexY]) begin
-              nextCpuCycle <= cyclePreRead;
+              nextCpuCycle = cyclePreRead;
             end else begin
-              nextCpuCycle <= cycleRead2;
+              nextCpuCycle = cycleRead2;
             end
           end
         end else if (opcInfo[`opcJump]) begin
-          nextCpuCycle <= cycleJump;
+          nextCpuCycle = cycleJump;
         end
       end
       cycle3 : begin
-        nextCpuCycle <= cycleRead;
+        nextCpuCycle = cycleRead;
         if (opcInfo[`opcWrite]) begin
           if (opcInfo[`indexX] || opcInfo[`indexY]) begin
-            nextCpuCycle <= cyclePreWrite;
+            nextCpuCycle = cyclePreWrite;
           end else begin
-            nextCpuCycle <= cycleWrite;
+            nextCpuCycle = cycleWrite;
           end
         end
         if (opcInfo[`opcIndirect] && opcInfo[`indexX]) begin
           if (opcInfo[`opcWrite]) begin
-            nextCpuCycle <= cycleWrite;
+            nextCpuCycle = cycleWrite;
           end else begin
-            nextCpuCycle <= cycleRead2;
+            nextCpuCycle = cycleRead2;
           end
         end
       end
       cyclePreIndirect : begin
-        nextCpuCycle <= cycleIndirect;
+        nextCpuCycle = cycleIndirect;
       end
       cycleIndirect : begin
-        nextCpuCycle <= cycle3;
+        nextCpuCycle = cycle3;
       end
       cycleBranchTaken : begin
         if (indexOut[8] != T[7]) begin
           // Page boundary crossing during branch.
-          nextCpuCycle <= cycleBranchPage;
+          nextCpuCycle = cycleBranchPage;
         end
       end
       cyclePreRead : begin
         if (opcInfo[`opcZeroPage]) begin
-          nextCpuCycle <= cycleRead2;
+          nextCpuCycle = cycleRead2;
         end
       end
       cycleRead : begin
         if (opcInfo[`opcJump]) begin
-          nextCpuCycle <= cycleJump;
+          nextCpuCycle = cycleJump;
         end else if (indexOut[8]) begin
           // Page boundary crossing while indexed addressing.
-          nextCpuCycle <= cycleRead2;
+          nextCpuCycle = cycleRead2;
         end else if (opcInfo[`opcRmw]) begin
-          nextCpuCycle <= cycleRmw;
+          nextCpuCycle = cycleRmw;
           if (opcInfo[`indexX] || opcInfo[`indexY]) begin
             // 6510 needs extra cycle for indexed addressing
             // combined with RMW indexing
-            nextCpuCycle <= cycleRead2;
+            nextCpuCycle = cycleRead2;
           end
         end
       end
       cycleRead2 : begin
         if (opcInfo[`opcRmw]) begin
-          nextCpuCycle <= cycleRmw;
+          nextCpuCycle = cycleRmw;
         end
       end
       cycleRmw : begin
-         nextCpuCycle <= cycleWrite;
+         nextCpuCycle = cycleWrite;
       end
       cyclePreWrite : begin
-        nextCpuCycle <= cycleWrite;
+        nextCpuCycle = cycleWrite;
       end
       cycleStack1 : begin
-        nextCpuCycle <= cycleRead;
+        nextCpuCycle = cycleRead;
         if (opcInfo[`opcStackAddr]) begin
-          nextCpuCycle <= cycleStack2;
+          nextCpuCycle = cycleStack2;
         end
       end
       cycleStack2 : begin
-        nextCpuCycle <= cycleStack3;
+        nextCpuCycle = cycleStack3;
         if (opcInfo[`opcRti]) begin
-          nextCpuCycle <= cycleRead;
+          nextCpuCycle = cycleRead;
         end
         if (!opcInfo[`opcStackData] && opcInfo[`opcStackUp]) begin
-          nextCpuCycle <= cycleJump;
+          nextCpuCycle = cycleJump;
         end
       end
       cycleStack3 : begin
-        nextCpuCycle <= cycleRead;
+        nextCpuCycle = cycleRead;
         if (!opcInfo[`opcStackData] || opcInfo[`opcStackUp]) begin
-          nextCpuCycle <= cycleJump;
+          nextCpuCycle = cycleJump;
         end else if (opcInfo[`opcStackAddr]) begin
-          nextCpuCycle <= cycleStack4;
+          nextCpuCycle = cycleStack4;
         end
       end
       cycleStack4 : begin
-        nextCpuCycle <= cycleRead;
+        nextCpuCycle = cycleRead;
       end
       cycleJump : begin
         if (opcInfo[`opcIncrAfter]) begin
           // Insert extra cycle
-          nextCpuCycle <= cycleEnd;
+          nextCpuCycle = cycleEnd;
         end
       end
       default : begin
@@ -1372,101 +1368,101 @@ localparam [3:0]
   // calcNextAddr: process(theCpuCycle, opcInfo, indexOut, T, reset)
   always @(theCpuCycle or opcInfo or indexOut or reset)
   begin
-    nextAddr <= nextAddrIncr;
+    nextAddr = nextAddrIncr;
     case (theCpuCycle)
       cycle2 : begin
         if (opcInfo[`opcStackAddr] || opcInfo[`opcStackData]) begin
-          nextAddr <= nextAddrStack;
+          nextAddr = nextAddrStack;
         end else if (opcInfo[`opcAbsolute]) begin
-          nextAddr <= nextAddrIncr;
+          nextAddr = nextAddrIncr;
         end else if (opcInfo[`opcZeroPage]) begin
-          nextAddr <= nextAddrZeroPage;
+          nextAddr = nextAddrZeroPage;
         end else if (opcInfo[`opcIndirect]) begin
-          nextAddr <= nextAddrZeroPage;
+          nextAddr = nextAddrZeroPage;
         end else if (opcInfo[`opcSecondByte]) begin
-          nextAddr <= nextAddrIncr;
+          nextAddr = nextAddrIncr;
         end else begin
-          nextAddr <= nextAddrHold;
+          nextAddr = nextAddrHold;
         end
       end
       cycle3 : begin
         if (opcInfo[`opcIndirect] && opcInfo[`indexX]) begin
-          nextAddr <= nextAddrAbs;
+          nextAddr = nextAddrAbs;
         end else begin
-          nextAddr <= nextAddrAbsIndexed;
+          nextAddr = nextAddrAbsIndexed;
         end
       end
       cyclePreIndirect : begin
-        nextAddr <= nextAddrZPIndexed;
+        nextAddr = nextAddrZPIndexed;
       end
       cycleIndirect : begin
-         nextAddr <= nextAddrIncrL;
+         nextAddr = nextAddrIncrL;
       end
       cycleBranchTaken : begin
-        nextAddr <= nextAddrRelative;
+        nextAddr = nextAddrRelative;
       end
       cycleBranchPage : begin
         if (!T[7]) begin
-          nextAddr <= nextAddrIncrH;
+          nextAddr = nextAddrIncrH;
         end else begin
-          nextAddr <= nextAddrDecrH;
+          nextAddr = nextAddrDecrH;
         end
       end
       cyclePreRead : begin
-        nextAddr <= nextAddrZPIndexed;
+        nextAddr = nextAddrZPIndexed;
       end
       cycleRead : begin
-        nextAddr <= nextAddrPc;
+        nextAddr = nextAddrPc;
         if (opcInfo[`opcJump]) begin
           // Emulate 6510 bug, jmp(xxFF) fetches from same page.
           // Replace with nextAddrIncr if emulating 65C02 or later cpu.
-          nextAddr <= nextAddrIncrL;
+          nextAddr = nextAddrIncrL;
         end else if (indexOut[8]) begin
-          nextAddr <= nextAddrIncrH;
+          nextAddr = nextAddrIncrH;
         end else if (opcInfo[`opcRmw]) begin
-          nextAddr <= nextAddrHold;
+          nextAddr = nextAddrHold;
         end
       end
       cycleRead2 : begin
-        nextAddr <= nextAddrPc;
+        nextAddr = nextAddrPc;
         if (opcInfo[`opcRmw]) begin
-          nextAddr <= nextAddrHold;
+          nextAddr = nextAddrHold;
         end
       end
       cycleRmw : begin
-        nextAddr <= nextAddrHold;
+        nextAddr = nextAddrHold;
       end
       cyclePreWrite : begin
-        nextAddr <= nextAddrHold;
+        nextAddr = nextAddrHold;
         if (opcInfo[`opcZeroPage]) begin
-          nextAddr <= nextAddrZPIndexed;
+          nextAddr = nextAddrZPIndexed;
         end else if (indexOut[8]) begin
-          nextAddr <= nextAddrIncrH;
+          nextAddr = nextAddrIncrH;
         end
       end
       cycleWrite : begin
-        nextAddr <= nextAddrPc;
+        nextAddr = nextAddrPc;
       end
       cycleStack1, cycleStack2 : begin
-        nextAddr <= nextAddrStack;
+        nextAddr = nextAddrStack;
       end
       cycleStack3 : begin
-        nextAddr <= nextAddrStack;
+        nextAddr = nextAddrStack;
         if (opcInfo[`opcStackData]) begin
-          nextAddr <= nextAddrPc;
+          nextAddr = nextAddrPc;
         end
       end
       cycleStack4 : begin
-        nextAddr <= nextAddrIrq;
+        nextAddr = nextAddrIrq;
       end
       cycleJump : begin
-        nextAddr <= nextAddrAbs;
+        nextAddr = nextAddrAbs;
       end
       default : begin
       end
     endcase
     if (reset) begin
-      nextAddr <= nextAddrReset;
+      nextAddr = nextAddrReset;
     end
   end
 
@@ -1474,13 +1470,13 @@ localparam [3:0]
   always @(opcInfo or myAddr or T or X or Y)
   begin
     if (opcInfo[`indexX]) begin
-      indexOut <= {1'b0, T} + {1'b0, X};
+      indexOut = {1'b0, T} + {1'b0, X};
     end else if (opcInfo[`indexY]) begin
-      indexOut <= {1'b0, T} + {1'b0, Y};
+      indexOut = {1'b0, T} + {1'b0, Y};
     end else if (opcInfo[`opcBranch]) begin
-      indexOut <= {1'b0, T} + {1'b0, myAddr[7:0]};
+      indexOut = {1'b0, T} + {1'b0, myAddr[7:0]};
     end else begin
-      indexOut <= {1'b0, T};
+      indexOut = {1'b0, T};
     end
   end
 
