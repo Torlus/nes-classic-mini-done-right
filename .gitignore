@@ -1,4 +1,6 @@
 obj_dir
+*.vcd
+*.gtkw
 
 # Prerequisites
 *.d

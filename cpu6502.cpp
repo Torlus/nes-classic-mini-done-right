@@ -5,7 +5,7 @@
 CPU6502::CPU6502(void) {
 	irq = nmi = false;
 
-	tmp = 0; 
+	tmp = 0;
 	addr = 0;
 	opcode = 0;
 	cycles = 0;
@@ -168,13 +168,13 @@ void CPU6502::adc(void) {
 
 void CPU6502::ahx(void) {
 	tmp = ((addr >> 8) + 1) & A & X;
-	write(addr, tmp & 0xFF); 
+	write(addr, tmp & 0xFF);
 }
-	
+
 
 void CPU6502::alr(void) {
 	tmp = read(addr) & A;
-	tmp = ((tmp & 1) << 8) | (tmp >> 1); 
+	tmp = ((tmp & 1) << 8) | (tmp >> 1);
 	fnzc(tmp);
 	A = tmp & 0xFF;
 }
@@ -194,7 +194,7 @@ void CPU6502::_and(void) {
 void CPU6502::ane(void) {
 	tmp = read(addr) & A & (A | 0xEE);
 	fnz(tmp);
-	A = tmp & 0xFF;	
+	A = tmp & 0xFF;
 }
 
 void CPU6502::arr(void) {
@@ -542,17 +542,17 @@ void CPU6502::sei(void) { I = 1; }
 void CPU6502::shs(void) {
 	tmp = ((addr >> 8) + 1) & A & X;
 	write(addr, tmp & 0xFF);
-	S = (tmp & 0xFF); 
+	S = (tmp & 0xFF);
 }
 
 void CPU6502::shx(void) {
 	tmp = ((addr >> 8) + 1) & X;
-	write(addr, tmp & 0xFF); 
+	write(addr, tmp & 0xFF);
 }
 
 void CPU6502::shy(void) {
 	tmp = ((addr >> 8) + 1) & Y;
-	write(addr, tmp & 0xFF); 
+	write(addr, tmp & 0xFF);
 }
 
 
@@ -906,13 +906,13 @@ void CPU6502::step(void) {
 }
 
 void CPU6502::log(FILE *stream) {
-	fprintf(stream, "nPC=%04X cyc=%09d [%02X] %c%c%c%c%c%c A=%02X X=%02X Y=%02X S=%02X\n",
-		PC, cycles % 1000000000, opcode, 
+	fprintf(stream, "nPC=%04X cyc=%012llu [%02X] %c%c%c%c%c%c A=%02X X=%02X Y=%02X S=%02X\n",
+		PC, cycles % 1000000000, opcode,
 		(C ? 'C' : '-'),
 		(N ? 'N' : '-'),
 		(Z ? 'Z' : '-'),
 		(V ? 'V' : '-'),
 		(D ? 'D' : '-'),
-		(I ? 'I' : '-'), 
+		(I ? 'I' : '-'),
 		A, X, Y, S);
 }

@@ -10,14 +10,14 @@ public:
     uint8_t A, X, Y, S; // Registers
     bool N, Z, C, V;    // ALU Flags
     bool I, D;          // Other Flags
-    
+
     bool irq, nmi;      // Interrupt Requests Logic Levels
-    
+
     uint8_t opcode;     // Current Opcode
-    uint32_t cycles;    // Cycles Counter
+    uint64_t cycles;    // Cycles Counter
 
     CPU6502(void);
-    
+
     uint8_t (*read)(uint16_t address);
     void (*write)(uint16_t address, uint8_t data);
 
@@ -25,9 +25,9 @@ public:
     void step(void);
     void log(FILE *stream);
 private:
-	uint16_t addr;
+	  uint16_t addr;
     uint16_t tmp;
-    
+
     void izx(void);
     void izy(void);
     void ind(void);
@@ -45,7 +45,7 @@ private:
     void fnzb(uint16_t v);
     void fnzc(uint16_t v);
     void branch(bool taken);
-    
+
     void adc(void);
     void ahx(void);
     void anc(void);

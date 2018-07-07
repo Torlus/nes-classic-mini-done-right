@@ -8,6 +8,9 @@ uint8_t cpu_read(uint16_t address) {
     return mem[address];
 }
 void cpu_write(uint16_t address, uint8_t data) {
+    // if (address >= 0x0005 && address < 0x000A) {
+    //   printf("WR @%04X : %02X\n", address, data);
+    // }
     mem[address] = data;
 }
 
@@ -15,7 +18,7 @@ int main() {
     FILE *prog = fopen("6502_functional_test.bin", "r");
     printf("Read %lu bytes\n", fread(mem, 1, 0x10000, prog));
     fclose(prog);
-    
+
     CPU6502 cpu;
     cpu.read = cpu_read;
     cpu.write = cpu_write;
@@ -33,7 +36,7 @@ int main() {
         prevPC = cpu.PC;
     }
     if (cpu.PC == 0x3B1C) {
-        printf("Success!\n");
+        printf("Success! Cycles: %llu\n", cpu.cycles);
     } else {
         printf("Failed at $%04X.\n", cpu.PC);
     }

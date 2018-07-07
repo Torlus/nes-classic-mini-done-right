@@ -479,7 +479,7 @@ localparam [0:0]
   assign opcodeInfoTable[8'h86] = { 4'b0000, 6'b000000, writeZp   , aluInX   , aluInp };  // 86 STX zp
   assign opcodeInfoTable[8'h87] = { 4'b0000, 6'b000000, writeZp   , aluInAX  , aluInp };  // 87 iSAX zp
   assign opcodeInfoTable[8'h88] = { 4'b0010, 6'b100010, implied   , aluInY   , aluDec };  // 88 DEY
-  assign opcodeInfoTable[8'h84] = { 4'b0000, 6'b000000, immediate , aluInXXX , aluXXX };  // 84 iNOP imm
+  assign opcodeInfoTable[8'h89] = { 4'b0000, 6'b000000, immediate , aluInXXX , aluXXX };  // 84 iNOP imm
   assign opcodeInfoTable[8'h8A] = { 4'b1000, 6'b100010, implied   , aluInX   , aluInp };  // 8A TXA
   assign opcodeInfoTable[8'h8B] = { 4'b1000, 6'b100010, immediate , aluInEXT , aluInp };  // 8B iANE imm
   assign opcodeInfoTable[8'h8C] = { 4'b0000, 6'b000000, writeAbs  , aluInY   , aluInp };  // 8C STY abs
@@ -788,7 +788,7 @@ localparam [3:0]
                           & ~lowBits[5]
                           ? nineBits0[8:4] + 5'd1 : nineBits0[8:4];
 
-  assign varN = (aluMode1 == aluModeBit) | (aluMode1 == aluModeFlg) ? rmwBits[7] : nineBits1[7];
+  assign varN = (aluMode1 == aluModeBit) || (aluMode1 == aluModeFlg) ? rmwBits[7] : nineBits1[7];
 
   assign varC0 = (aluMode2 == aluModeArr) ? aluInput[7] : nineBits1[8];
 
@@ -1081,24 +1081,24 @@ localparam [3:0]
   // calcT: process(clk)
   always @(posedge clk)
   begin
-  if (enable) begin
-  case (theCpuCycle)
-    cycle2 : begin
-    T <= din;
+    if (enable) begin
+      case (theCpuCycle)
+        cycle2 : begin
+          T <= din;
         end
-    cycleStack1, cycleStack2 : begin
-    if (opcInfo[`opcStackUp]) begin
-    // Read from stack
-    T <= din;
+        cycleStack1, cycleStack2 : begin
+          if (opcInfo[`opcStackUp]) begin
+            // Read from stack
+            T <= din;
           end
-  end
-    cycleIndirect, cycleRead, cycleRead2 : begin
-    T <= din;
         end
-    default : begin
-  end
+        cycleIndirect, cycleRead, cycleRead2 : begin
+          T <= din;
+        end
+        default : begin
+        end
       endcase
-  end
+    end
   end
 
   // -----------------------------------------------------------------------
@@ -1106,7 +1106,7 @@ localparam [3:0]
   // -----------------------------------------------------------------------
   always @(posedge clk)
   begin
-  if (updateRegisters) begin
+    if (updateRegisters) begin
       if (opcInfo[`opcUpdateA]) begin
         A <= aluRegisterOut;
       end
@@ -1118,7 +1118,7 @@ localparam [3:0]
   // -----------------------------------------------------------------------
   always @(posedge clk)
   begin
-  if (updateRegisters) begin
+    if (updateRegisters) begin
       if (opcInfo[`opcUpdateX]) begin
         X <= aluRegisterOut;
       end
@@ -1130,7 +1130,7 @@ localparam [3:0]
   // -----------------------------------------------------------------------
   always @(posedge clk)
   begin
-  if (updateRegisters) begin
+    if (updateRegisters) begin
       if (opcInfo[`opcUpdateY]) begin
         Y <= aluRegisterOut;
       end
@@ -1154,7 +1154,7 @@ localparam [3:0]
   // -----------------------------------------------------------------------
   always @(posedge clk)
   begin
-  if (updateRegisters) begin
+    if (updateRegisters) begin
       if (opcInfo[`opcUpdateZ]) begin
         Z <= aluZ;
       end
@@ -1166,7 +1166,7 @@ localparam [3:0]
   // -----------------------------------------------------------------------
   always @(posedge clk)
   begin
-  if (updateRegisters) begin
+    if (updateRegisters) begin
       if (opcInfo[`opcUpdateI]) begin
         I <= aluInput[2];
       end
@@ -1178,9 +1178,9 @@ localparam [3:0]
   // -----------------------------------------------------------------------
   always @(posedge clk)
   begin
-  if (updateRegisters) begin
+    if (updateRegisters) begin
       if (opcInfo[`opcUpdateD]) begin
-        Z <= aluInput[3];
+        D <= aluInput[3];
       end
     end
   end
@@ -1190,7 +1190,7 @@ localparam [3:0]
   // -----------------------------------------------------------------------
   always @(posedge clk)
   begin
-  if (updateRegisters) begin
+    if (updateRegisters) begin
       if (opcInfo[`opcUpdateV]) begin
         V <= aluV;
       end
@@ -1209,9 +1209,9 @@ localparam [3:0]
   // -----------------------------------------------------------------------
   always @(posedge clk)
   begin
-  if (updateRegisters) begin
+    if (updateRegisters) begin
       if (opcInfo[`opcUpdateN]) begin
-        Z <= aluN;
+        N <= aluN;
       end
     end
   end
@@ -1226,6 +1226,8 @@ localparam [3:0]
     end else begin
       sIncDec = S - 1;
     end
+
+    updateFlag = 1'b0;
 
     case (nextCpuCycle)
       cycleStack1 : begin
@@ -1247,7 +1249,6 @@ localparam [3:0]
         end
       end
       default : begin
-        updateFlag = 1'b0;
       end
     endcase
   end
@@ -1311,7 +1312,7 @@ localparam [3:0]
       case (nextCpuCycle)
         cycleStack1 : begin
           if (!opcInfo[`opcStackUp]
-              && (!opcInfo[`opcStackAddr] | opcInfo[`opcStackData])) begin
+              && (!opcInfo[`opcStackAddr] || opcInfo[`opcStackData])) begin
              theWe <= 1'b1;
           end
         end
@@ -1448,7 +1449,7 @@ localparam [3:0]
       end
       cycleStack3 : begin
         nextAddr = nextAddrStack;
-        if (opcInfo[`opcStackData]) begin
+        if (!opcInfo[`opcStackData]) begin
           nextAddr = nextAddrPc;
         end
       end

@@ -1,4 +1,4 @@
-
 #!/bin/sh
 rm -f *.o test_cpu6502
+rm -fr obj_dir
 

@@ -1,8 +1,8 @@
 #!/bin/sh
 
-# g++ -c cpu6502.cpp
-# g++ -c test_cpu6502.cpp
-# g++ -o test_cpu6502 cpu6502.o test_cpu6502.o
+g++ -c cpu6502.cpp
+g++ -c test_cpu6502.cpp
+g++ -o test_cpu6502 cpu6502.o test_cpu6502.o
 
 # g++ -c ppu.cpp
 
@@ -19,6 +19,7 @@ TOP_FILE=cpu65xx
 CPP_FILES=\
 "test_cpu6502_hw.cpp"
 
+rm -fr obj_dir
 verilator $TOP_FILE.v $COMPILE_OPT $TRACE_OPT -top-module $TOP_FILE -exe $CPP_FILES
 cd ./obj_dir
 make -j -f V$TOP_FILE.mk V$TOP_FILE
